@@ -17,7 +17,7 @@ DELIMITER ;
 -- The procedure `UpdateBookPrice` updates the price of a book identified by the `book_id` parameter to the value specified by the `new_price` parameter
 DELIMITER //
 
-CREATE PROCEDURE UpdateBookPrice(
+CREATE PROCEDURE GetUpdateBookPrice(
     INOUT book_id INT,
     IN new_price DOUBLE
 )
@@ -28,36 +28,43 @@ END //
 DELIMITER ;
 
 
--- The procedure `ProcessLoanReturn` updates the return date of a loan specified by `loan_id`.
--- It checks if the loan is overdue by comparing return and due dates.
--- If overdue, it rolls back the transaction; otherwise, it commits the changes
+-- The `ProcessLoanReturnAndUpdateBookPrice_` procedure manages loan returns and book price updates.
+-- It first retrieves loan details and checks if the return is overdue. Using a transaction, it updates the return date in the `loan`
+-- table and inserts a log entry if none exists for the current date. If the loan isn't overdue and lacks a log entry for the date,
+-- it reduces the book price by 5%. The transaction is then committed or rolled back based on the overdue status.
 DELIMITER //
 
-CREATE PROCEDURE ProcessLoanReturn(
+CREATE PROCEDURE GetProcessLoanReturnAndUpdateBookPrice(
     IN loan_id INT,
     IN return_date DATE
 )
 BEGIN
     DECLARE loan_due_date DATE;
-    DECLARE loan_returned_date DATE;
-    DECLARE overdue BOOLEAN;
+    DECLARE book_id INT;
+    DECLARE existing_log_count INT;
+    DECLARE overdue BOOLEAN DEFAULT FALSE;
 
-    SELECT due_date, return_date INTO loan_due_date, loan_returned_date FROM loan WHERE id = loan_id;
+    SELECT due_date, book_id INTO loan_due_date, book_id FROM loan WHERE id = loan_id;
 
-    IF loan_returned_date > loan_due_date THEN
+    IF return_date > loan_due_date THEN
         SET overdue = TRUE;
-    ELSE
-        SET overdue = FALSE;
     END IF;
 
     START TRANSACTION;
 
     UPDATE loan SET return_date = return_date WHERE id = loan_id;
 
-    IF overdue THEN
-        ROLLBACK;
-    ELSE
+    SELECT COUNT(1) INTO existing_log_count FROM loan_log WHERE loan_id = loan_id AND DATE(processed_date) = CURDATE();
+
+    IF existing_log_count = 0 THEN
+        INSERT INTO loan_log (loan_id, processed_date) VALUES (loan_id, NOW());
+    END IF;
+
+    IF NOT overdue THEN
+        UPDATE book SET price = price * 0.95 WHERE id = book_id;
         COMMIT;
+    ELSE
+        ROLLBACK;
     END IF;
 END //
 
