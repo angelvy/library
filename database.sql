@@ -66,6 +66,13 @@ CREATE TABLE book_genre (
     FOREIGN KEY (genre_id) REFERENCES genre(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE loan_log (
+    loan_id INT NOT NULL,
+    processed_date DATE NOT NULL,
+    FOREIGN KEY (loan_id) REFERENCES loan(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    PRIMARY KEY (loan_id, processed_date)
+);
+
 
 INSERT INTO publisher (id, name_, address, phone, website)
 VALUES
@@ -181,3 +188,10 @@ VALUES
     (11, 10),
     (11, 11);
 
+INSERT INTO loan_log (loan_id, processed_date)
+VALUES
+    (1, '2024-04-08'),
+    (2, '2024-03-10'),
+    (3, '2024-04-06'),
+    (4, '2024-03-20'),
+    (5, '2024-04-01');
