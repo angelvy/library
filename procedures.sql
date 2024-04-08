@@ -2,7 +2,7 @@
 -- The title is stored in the `book_title` output parameter, and the price is stored in the `book_price` output parameter
 DELIMITER //
 
-CREATE PROCEDURE GetBookInfo(
+CREATE PROCEDURE get_book_info_sproc(
     IN book_id INT,
     OUT book_title VARCHAR(255),
     OUT book_price DOUBLE
@@ -17,8 +17,8 @@ DELIMITER ;
 -- The procedure `UpdateBookPrice` updates the price of a book identified by the `book_id` parameter to the value specified by the `new_price` parameter
 DELIMITER //
 
-CREATE PROCEDURE GetUpdateBookPrice(
-    INOUT book_id INT,
+CREATE PROCEDURE get_update_book_price_sproc(
+    IN book_id INT,
     IN new_price DOUBLE
 )
 BEGIN
@@ -34,7 +34,7 @@ DELIMITER ;
 -- it reduces the book price by 5%. The transaction is then committed or rolled back based on the overdue status.
 DELIMITER //
 
-CREATE PROCEDURE GetProcessLoanReturnAndUpdateBookPrice(
+CREATE PROCEDURE get_process_loan_return_and_update_book_price_sproc(
     IN loan_id INT,
     IN return_date DATE
 )
